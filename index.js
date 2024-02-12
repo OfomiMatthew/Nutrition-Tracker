@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const userModel = require("./models/userModel");
+const foodModel = require("./models/foodModel");
 
 mongoose
   .connect(
@@ -39,6 +40,7 @@ app.post("/register/", (req, res) => {
   });
 });
 
+// login endpoint
 app.post("/login/", async (req, res) => {
   let userCred = req.body;
   try {
@@ -48,7 +50,7 @@ app.post("/login/", async (req, res) => {
         if (result === true) {
           jwt.sign({ email: userCred.email }, "mattKey", (err, token) => {
             if (!err) {
-              res.send({ message: "Login Success" , token: token});
+              res.send({ message: "Login Success", token: token });
             } else {
               res.status(401).send("issue occured creating token");
             }
@@ -65,6 +67,45 @@ app.post("/login/", async (req, res) => {
     res.status(500).send(err.message);
   }
 });
+
+// endpoint for creating new food
+
+app.post("/foods/", async (req, res) => {
+  const food = req.body;
+  try {
+    const data = await foodModel.create(food);
+    res.status(201).send({ data: data, message: "Food created" });
+  } catch (err) {
+    res.status(400).send({ message: err.message });
+  }
+});
+
+// endpoint for getting all foods
+
+app.get("/foods/", verifyToken, async (req, res) => {
+  try {
+    let data = await foodModel.find();
+    res.send(data);
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+});
+
+function verifyToken(req, res, next) {
+  if (req.headers.authorization !== undefined) {
+    let token = req.headers.authorization.split(" ")[1];
+    jwt.verify(token, "mattKey", (err, data) => {
+      if (!err) {
+        next();
+      } else {
+        res.status(403).send({ message: "invalid token please login" });
+      }
+    });
+    // res.send("coming from mw");
+  } else {
+    res.send({ message: "Please send a token" });
+  }
+}
 
 app.listen(4000, () => {
   console.log("server running");
