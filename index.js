@@ -4,7 +4,7 @@ const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const userModel = require("./models/userModel");
 const foodModel = require("./models/foodModel");
-const verifyToken = require('./verifyToken')
+const verifyToken = require("./verifyToken");
 
 mongoose
   .connect(
@@ -92,20 +92,16 @@ app.get("/foods/", verifyToken, async (req, res) => {
   }
 });
 
-
 // endpoint for getting a single food
-app.get('/foods/:name',async(req,res)=>{
-  try{
-    let foods = await foodModel.findOne({name:req.params.name})
-    res.send({data:foods})
+app.get("/foods/:name", verifyToken, async (req, res) => {
+  try {
+    // The $regex is used to search for any matching not exact match per se
+    let foods = await foodModel.find({ name: { $regex: req.params.name,$options:'i' } });
+    res.send({ data: foods });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
   }
-  catch(err){
-    res.status(500).send({message:err.message})
-  }
- 
-
-})
-
+});
 
 app.listen(4000, () => {
   console.log("server running");
