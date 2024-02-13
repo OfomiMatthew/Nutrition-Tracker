@@ -4,6 +4,7 @@ const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const userModel = require("./models/userModel");
 const foodModel = require("./models/foodModel");
+const verifyToken = require('./verifyToken')
 
 mongoose
   .connect(
@@ -91,21 +92,20 @@ app.get("/foods/", verifyToken, async (req, res) => {
   }
 });
 
-function verifyToken(req, res, next) {
-  if (req.headers.authorization !== undefined) {
-    let token = req.headers.authorization.split(" ")[1];
-    jwt.verify(token, "mattKey", (err, data) => {
-      if (!err) {
-        next();
-      } else {
-        res.status(403).send({ message: "invalid token please login" });
-      }
-    });
-    // res.send("coming from mw");
-  } else {
-    res.send({ message: "Please send a token" });
+
+// endpoint for getting a single food
+app.get('/foods/:name',async(req,res)=>{
+  try{
+    let foods = await foodModel.findOne({name:req.params.name})
+    res.send({data:foods})
   }
-}
+  catch(err){
+    res.status(500).send({message:err.message})
+  }
+ 
+
+})
+
 
 app.listen(4000, () => {
   console.log("server running");
