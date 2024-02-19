@@ -4,6 +4,7 @@ const bcryptjs = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const userModel = require("./models/userModel");
 const foodModel = require("./models/foodModel");
+const trackingModel = require("./models/trackingModel");
 const verifyToken = require("./verifyToken");
 
 mongoose
@@ -63,7 +64,7 @@ app.post("/login/", async (req, res) => {
     } else {
       res.status(404).send({ message: "User not found!" });
     }
-  } catch (e) {
+  } catch (err) {
     console.log(err);
     res.status(500).send(err.message);
   }
@@ -96,10 +97,42 @@ app.get("/foods/", verifyToken, async (req, res) => {
 app.get("/foods/:name", verifyToken, async (req, res) => {
   try {
     // The $regex is used to search for any matching not exact match per se
-    let foods = await foodModel.find({ name: { $regex: req.params.name,$options:'i' } });
-    res.send({ data: foods });
+    let foods = await foodModel.find({
+      name: { $regex: req.params.name, $options: "i" },
+    });
+    if (foods.length !== 0) {
+      res.send({ data: foods });
+    } else {
+      res.status(404).send({ message: "No food found" });
+    }
   } catch (err) {
     res.status(500).send({ message: err.message });
+  }
+});
+
+// endpoint tracking foods eaten by users
+app.post("/track/", verifyToken, async (req, res) => {
+  let trackData = req.body;
+  try {
+    let foodData = await trackingModel.create(trackData);
+    res.status(201).send({ message: "Food added", data: foodData });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({ message: "Some Problem adding food" });
+  }
+});
+
+// endpoint for getting food eaten by a user
+
+app.get("/track/:userid",verifyToken, async (req, res) => {
+  let userId = req.params.userid;
+  try {
+    let foods = await trackingModel.find({ userID: userId }).populate('userID').populate('foodID');
+    res.send(foods);
+    
+  } catch (err) {
+    console.log("no user found");
+    res.status(500).send("No user found");
   }
 });
 
