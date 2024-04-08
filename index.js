@@ -6,7 +6,10 @@ const userModel = require("./models/userModel");
 const foodModel = require("./models/foodModel");
 const trackingModel = require("./models/trackingModel");
 const verifyToken = require("./verifyToken");
+require('dotenv').config()
 
+
+// database connection
 mongoose
   .connect(
     "mongodb+srv://ofomimatthew7:jerryhope1994@nutri-tracker-cluster.0lx0arv.mongodb.net/nutrition-tracker-db"
@@ -32,7 +35,7 @@ app.post("/register/", (req, res) => {
           user.password = hash;
           try {
             let data = userModel.create(user);
-            res.status(201).send({ data: data, message: "User Registered" });
+            res.status(201).send({message: "User Registered" });
           } catch (err) {
             res.status(500).send(err.message);
           }
@@ -50,7 +53,7 @@ app.post("/login/", async (req, res) => {
     if (userData !== null) {
       bcryptjs.compare(userCred.password, userData.password, (err, result) => {
         if (result === true) {
-          jwt.sign({ email: userCred.email }, "mattKey", (err, token) => {
+          jwt.sign({ email: userCred.email },process.env.SECRET_KEY, (err, token) => {
             if (!err) {
               res.send({ message: "Login Success", token: token });
             } else {
@@ -124,10 +127,11 @@ app.post("/track/", verifyToken, async (req, res) => {
 
 // endpoint for getting food eaten by a user
 
-app.get("/track/:userid",verifyToken, async (req, res) => {
+app.get("/track/:userid/:date",verifyToken, async (req, res) => {
   let userId = req.params.userid;
+  let dateEaten = req.params.date
   try {
-    let foods = await trackingModel.find({ userID: userId }).populate('userID').populate('foodID');
+    let foods = await trackingModel.find({ userID: userId,eatenDate:dateEaten }).populate('userID').populate('foodID');
     res.send(foods);
     
   } catch (err) {
