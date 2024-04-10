@@ -1,16 +1,17 @@
 const jwt = require("jsonwebtoken");
+require('dotenv').config()
 
 function verifyToken(req, res, next) {
   if (req.headers.authorization !== undefined) {
     let token = req.headers.authorization.split(" ")[1];
-    jwt.verify(token, "mattKey", (err, data) => {
+    jwt.verify(token, process.env.SECRET_KEY, (err, data) => {
       if (!err) {
         next();
       } else {
-        res.status(403).send({ message: "invalid token please login" });
+        res.status(403).send({ message: "Invalid token please login" });
       }
     });
-    // res.send("coming from mw");
+  
   } else {
     res.send({ message: "Please send a token" });
   }

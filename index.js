@@ -6,8 +6,7 @@ const userModel = require("./models/userModel");
 const foodModel = require("./models/foodModel");
 const trackingModel = require("./models/trackingModel");
 const verifyToken = require("./verifyToken");
-require('dotenv').config()
-
+require("dotenv").config();
 
 // database connection
 mongoose
@@ -26,8 +25,12 @@ const app = express();
 app.use(express.json());
 
 // registering user
-app.post("/register/", (req, res) => {
+app.post("/register/", async (req, res) => {
   let user = req.body;
+  const existingUser = await userModel.findOne({ email: user.email });
+  if (existingUser) {
+    return res.status(400).send({ message: "Email already exists" });
+  }
   bcryptjs.genSalt(10, (err, salt) => {
     if (!err) {
       bcryptjs.hash(user.password, salt, async (err, hash) => {
@@ -35,7 +38,7 @@ app.post("/register/", (req, res) => {
           user.password = hash;
           try {
             let data = userModel.create(user);
-            res.status(201).send({message: "User Registered" });
+            res.status(201).send({ message: "User Registered" });
           } catch (err) {
             res.status(500).send(err.message);
           }
@@ -53,13 +56,17 @@ app.post("/login/", async (req, res) => {
     if (userData !== null) {
       bcryptjs.compare(userCred.password, userData.password, (err, result) => {
         if (result === true) {
-          jwt.sign({ email: userCred.email },process.env.SECRET_KEY, (err, token) => {
-            if (!err) {
-              res.send({ message: "Login Success", token: token });
-            } else {
-              res.status(401).send("issue occured creating token");
+          jwt.sign(
+            { email: userCred.email },
+            process.env.SECRET_KEY,
+            (err, token) => {
+              if (!err) {
+                res.send({ message: "Login Success", token: token });
+              } else {
+                res.status(401).send("issue occured creating token");
+              }
             }
-          });
+          );
         } else {
           res.status(403).send({ message: "Incorrect password" });
         }
@@ -120,22 +127,21 @@ app.post("/track/", verifyToken, async (req, res) => {
     let foodData = await trackingModel.create(trackData);
     res.status(201).send({ message: "Food added", data: foodData });
   } catch (err) {
-    console.log(err);
     res.status(500).send({ message: "Some Problem adding food" });
   }
 });
 
 // endpoint for getting food eaten by a user
-
-app.get("/track/:userid/:date",verifyToken, async (req, res) => {
+app.get("/track/:userid/:date", verifyToken, async (req, res) => {
   let userId = req.params.userid;
-  let dateEaten = req.params.date
+  let dateEaten = req.params.date;
   try {
-    let foods = await trackingModel.find({ userID: userId,eatenDate:dateEaten }).populate('userID').populate('foodID');
+    let foods = await trackingModel
+      .find({ userID: userId, eatenDate: dateEaten })
+      .populate("userID")
+      .populate("foodID");
     res.send(foods);
-    
   } catch (err) {
-    console.log("no user found");
     res.status(500).send("No user found");
   }
 });
