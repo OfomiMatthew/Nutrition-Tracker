@@ -6,6 +6,7 @@ const userModel = require("./models/userModel");
 const foodModel = require("./models/foodModel");
 const trackingModel = require("./models/trackingModel");
 const verifyToken = require("./verifyToken");
+
 require("dotenv").config();
 
 // database connection
@@ -134,7 +135,9 @@ app.post("/track/", verifyToken, async (req, res) => {
 // endpoint for getting food eaten by a user
 app.get("/track/:userid/:date", verifyToken, async (req, res) => {
   let userId = req.params.userid;
-  let dateEaten = req.params.date;
+  let dateEaten = new Date(req.params.date).toLocaleDateString();
+
+
   try {
     let foods = await trackingModel
       .find({ userID: userId, eatenDate: dateEaten })

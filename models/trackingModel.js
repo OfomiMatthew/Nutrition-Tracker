@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+
 const trackingSchema = mongoose.Schema(
   {
     userID: {
@@ -14,8 +15,8 @@ const trackingSchema = mongoose.Schema(
     },
 
     eatenDate: {
-      type: Date,
-      default: new Date(),
+      type: String,
+      default: new Date().toLocaleDateString(),
     },
     quantity: {
       type: Number,
